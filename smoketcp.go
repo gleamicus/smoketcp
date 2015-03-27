@@ -18,14 +18,14 @@ func dieIfError(err error) {
 	}
 }
 
-func doEvery(d time.Duration, f func(*statsd.Client, string, bool), s *statsd.Client, targetFile string, debug bool) {
+func doEvery(d time.Duration, f func(statsd.Statter, string, bool), s statsd.Statter, targetFile string, debug bool) {
 	f(s, targetFile, debug)
 	for _ = range time.Tick(d) {
 		f(s, targetFile, debug)
 	}
 }
 
-func processTargets(s *statsd.Client, targetFile string, debug bool) {
+func processTargets(s statsd.Statter, targetFile string, debug bool) {
 	content, err := ioutil.ReadFile(targetFile)
 	if err != nil {
 		if debug {
@@ -42,7 +42,7 @@ func processTargets(s *statsd.Client, targetFile string, debug bool) {
 	}
 }
 
-func test(target string, s *statsd.Client, debug bool) {
+func test(target string, s statsd.Statter, debug bool) {
 	tuple := strings.Split(target, ":")
 	host := tuple[0]
 	port := tuple[1]
@@ -75,8 +75,8 @@ func main() {
 	var interval = flag.Int("interval", 10, "How often to run the tests")
 	flag.Parse()
 
-	s, err := statsd.Dial(fmt.Sprintf("%s:%s", *statsdHost, *statsdPort), fmt.Sprintf("%s", *bucket))
+	client, err := statsd.NewClient(fmt.Sprintf("%s:%s", *statsdHost, *statsdPort), fmt.Sprintf("%s", *bucket))
 	dieIfError(err)
-	defer s.Close()
-	doEvery(time.Duration(*interval)*time.Second, processTargets, s, *targetFile, *debug)
+	defer client.Close()
+	doEvery(time.Duration(*interval)*time.Second, processTargets, client, *targetFile, *debug)
 }
