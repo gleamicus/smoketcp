@@ -28,10 +28,8 @@ func doEvery(d time.Duration, f func(statsd.Statter, string, bool), s statsd.Sta
 func processTargets(s statsd.Statter, targetFile string, debug bool) {
 	content, err := ioutil.ReadFile(targetFile)
 	if err != nil {
-		if debug {
-			fmt.Println("couldn't open targets file:", targetFile)
-		}
-		return
+		fmt.Println("couldn't open targets file:", targetFile)
+		os.Exit(1)
 	}
 	targets := strings.Split(string(content), "\n")
 	for _, target := range targets {
